@@ -4,9 +4,15 @@ import os
 from tqdm import tqdm
 
 class Text2PhonemeSequence:
-    def __init__(self, pretrained_g2p_model='charsiu/g2p_multilingual_byT5_small_100', tokenizer= 'google/byt5-small', language='vie-c', is_cuda=True):
-        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer)
-        self.model = T5ForConditionalGeneration.from_pretrained(pretrained_g2p_model)
+    def __init__(self, pretrained_g2p_model='charsiu/g2p_multilingual_byT5_small_100', tokenizer= 'google/byt5-small', language='vie-c', is_cuda=True,
+                 cache_dir=None, local_files_only=False):
+        if cache_dir is not None:
+            os.environ['TRANSFORMERS_CACHE'] = cache_dir
+            self.tokenizer = AutoTokenizer.from_pretrained(tokenizer, cache_dir=cache_dir, local_files_only=local_files_only)
+            self.model = T5ForConditionalGeneration.from_pretrained(pretrained_g2p_model, cache_dir=cache_dir, local_files_only=local_files_only)
+        else:
+            self.tokenizer = AutoTokenizer.from_pretrained(tokenizer, local_files_only=local_files_only)
+            self.model = T5ForConditionalGeneration.from_pretrained(pretrained_g2p_model, local_files_only=local_files_only)
         self.is_cuda = is_cuda
         if self.is_cuda:
             self.model = self.model.cuda()
@@ -123,6 +129,7 @@ class Text2PhonemeSequence:
 
 
 if __name__ == '__main__':
-    a = Text2PhonemeSequence(pretrained_g2p_model='charsiu/g2p_multilingual_byT5_tiny_16_layers_100', language='eng-us', is_cuda=False)
-    print(a.infer_sentence("The overwhelming majority of people in this country know how to sift the wheat from the chaff in what they hear and what they read ."))
-    a.infer_dataset(input_file="input.txt", output_file="output.txt")
+    a = Text2PhonemeSequence(pretrained_g2p_model='charsiu/g2p_multilingual_byT5_tiny_16_layers_100', language='fra', is_cuda=False,
+                             cache_dir='./cache', local_files_only=True)
+    print(a.infer_sentence("Une écotaxe poids lourds sera mise en œuvre."))
+    # a.infer_dataset(input_file="input.txt", output_file="output.txt")
